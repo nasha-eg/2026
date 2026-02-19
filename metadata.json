@@ -1,0 +1,7 @@
+{
+  "name": "Fahm Al-Assema - Capital Charcoal",
+  "description": "Professional charcoal trading platform with multilingual support, product galleries, articles, and a comprehensive admin dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
