@@ -24,6 +24,18 @@
         .font-en { font-family: var(--font-en); }
         .dir-ltr { direction: ltr; }
         .dir-rtl { direction: rtl; }
+        
+        /* Custom scrollbar for admin dashboard */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #ea580c;
+          border-radius: 10px;
+        }
     </style>
 <script type="importmap">
 {
@@ -40,5 +52,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- الربط البرمجي الأساسي -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

@@ -1,108 +1,97 @@
 
 import { Product, Article, Review, SiteConfig, GalleryItem } from '../types';
+import { database } from './database';
 
-const API_BASE_URL = '/api'; 
-
-const safeFetchJson = async (url: string, options?: RequestInit) => {
-  try {
-    const res = await fetch(url, options);
-    if (!res.ok) return null;
-    const contentType = res.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await res.json();
-    }
-    return null;
-  } catch (e) {
-    console.error(`API Error at ${url}:`, e);
-    return null;
-  }
+const DB_KEYS = {
+  PRODUCTS: 'capital_charcoal_products',
+  ARTICLES: 'capital_charcoal_articles',
+  GALLERY: 'capital_charcoal_gallery',
+  REVIEWS: 'capital_charcoal_reviews',
+  INQUIRIES: 'capital_charcoal_inquiries',
+  SETTINGS: 'capital_charcoal_settings'
 };
 
 export const apiService = {
   // Products
-  async getProducts(): Promise<Product[] | null> {
-    return safeFetchJson(`${API_BASE_URL}/products.php`);
+  async getProducts(): Promise<Product[]> {
+    return database.get<Product[]>(DB_KEYS.PRODUCTS);
   },
   async saveProduct(product: Product) {
-    return fetch(`${API_BASE_URL}/products.php`, {
-      method: 'POST',
-      body: JSON.stringify(product),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    database.saveProduct(product);
+    return { success: true };
   },
   async deleteProduct(id: string) {
-    return fetch(`${API_BASE_URL}/products.php?id=${id}`, { method: 'DELETE' });
+    database.deleteProduct(id);
+    return { success: true };
   },
 
   // Articles
-  async getArticles(): Promise<Article[] | null> {
-    return safeFetchJson(`${API_BASE_URL}/articles.php`);
+  async getArticles(): Promise<Article[]> {
+    return database.get<Article[]>(DB_KEYS.ARTICLES);
   },
   async saveArticle(article: Article) {
-    return fetch(`${API_BASE_URL}/articles.php`, {
-      method: 'POST',
-      body: JSON.stringify(article),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    database.saveArticle(article);
+    return { success: true };
   },
   async deleteArticle(id: string) {
-    return fetch(`${API_BASE_URL}/articles.php?id=${id}`, { method: 'DELETE' });
+    database.deleteArticle(id);
+    return { success: true };
   },
 
   // Gallery
-  async getGallery(): Promise<GalleryItem[] | null> {
-    return safeFetchJson(`${API_BASE_URL}/gallery.php`);
+  async getGallery(): Promise<GalleryItem[]> {
+    return database.get<GalleryItem[]>(DB_KEYS.GALLERY);
   },
   async saveGalleryItem(item: GalleryItem) {
-    return fetch(`${API_BASE_URL}/gallery.php`, {
-      method: 'POST',
-      body: JSON.stringify(item),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const items = database.get<GalleryItem[]>(DB_KEYS.GALLERY);
+    items.push(item);
+    database.save(DB_KEYS.GALLERY, items);
+    return { success: true };
   },
   async deleteGalleryItem(id: string) {
-    return fetch(`${API_BASE_URL}/gallery.php?id=${id}`, { method: 'DELETE' });
+    const items = database.get<GalleryItem[]>(DB_KEYS.GALLERY).filter(i => i.id !== id);
+    database.save(DB_KEYS.GALLERY, items);
+    return { success: true };
   },
 
   // Reviews
-  async getReviews(): Promise<Review[] | null> {
-    return safeFetchJson(`${API_BASE_URL}/reviews.php`);
+  async getReviews(): Promise<Review[]> {
+    return database.get<Review[]>(DB_KEYS.REVIEWS);
   },
   async saveReview(review: Review) {
-    return fetch(`${API_BASE_URL}/reviews.php`, {
-      method: 'POST',
-      body: JSON.stringify(review),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const items = database.get<Review[]>(DB_KEYS.REVIEWS);
+    items.push(review);
+    database.save(DB_KEYS.REVIEWS, items);
+    return { success: true };
   },
   async deleteReview(id: string) {
-    return fetch(`${API_BASE_URL}/reviews.php?id=${id}`, { method: 'DELETE' });
+    const items = database.get<Review[]>(DB_KEYS.REVIEWS).filter(r => r.id !== id);
+    database.save(DB_KEYS.REVIEWS, items);
+    return { success: true };
   },
 
   // Inquiries
   async getInquiries() {
-    return safeFetchJson(`${API_BASE_URL}/inquiries.php`);
+    return database.get<any[]>(DB_KEYS.INQUIRIES);
   },
   async deleteInquiry(id: string) {
-    return fetch(`${API_BASE_URL}/inquiries.php?id=${id}`, { method: 'DELETE' });
+    const items = database.get<any[]>(DB_KEYS.INQUIRIES).filter(i => i.id !== id);
+    database.save(DB_KEYS.INQUIRIES, items);
+    return { success: true };
   },
   async sendInquiry(inquiry: any) {
-    return fetch(`${API_BASE_URL}/inquiries.php`, {
-      method: 'POST',
-      body: JSON.stringify(inquiry),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const items = database.get<any[]>(DB_KEYS.INQUIRIES);
+    items.unshift(inquiry);
+    database.save(DB_KEYS.INQUIRIES, items);
+    return { success: true };
   },
 
   // Settings
-  async getSettings(): Promise<SiteConfig | null> {
-    return safeFetchJson(`${API_BASE_URL}/settings.php`);
+  async getSettings(): Promise<SiteConfig> {
+    return database.get<SiteConfig>(DB_KEYS.SETTINGS);
   },
   async saveSettings(config: SiteConfig) {
-    return fetch(`${API_BASE_URL}/settings.php`, {
-      method: 'POST',
-      body: JSON.stringify(config),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    database.save(DB_KEYS.SETTINGS, config);
+    return { success: true };
   }
 };
