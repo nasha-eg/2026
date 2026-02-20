@@ -19,6 +19,7 @@ import {
   Trash2, 
   X, 
   Eye,
+  Menu,
   Save,
   Globe
 } from 'lucide-react';
@@ -70,7 +71,14 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const handleLogout = () => { setIsLoggedIn(false); navigate('/'); };
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+  };
 
   // Common Save Handler to avoid repetition
   const handleSave = async (fn: () => Promise<any>, successMsg: string) => {
@@ -151,10 +159,24 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col lg:flex-row font-ar">
+    <div className="min-h-screen bg-zinc-50 flex flex-col lg:flex-row font-ar overflow-x-hidden">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-zinc-950 text-white p-6 flex items-center justify-between sticky top-0 z-[60] shadow-xl">
+        <div className="flex items-center gap-3" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center font-black rotate-12">C</div>
+          <h2 className="text-lg font-black tracking-tighter uppercase italic">Capital</h2>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-white/10 rounded-xl">
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
       {/* Sidebar Navigation */}
-      <aside className="lg:w-72 bg-zinc-950 text-white flex flex-col sticky top-0 h-screen z-50 overflow-hidden shadow-2xl">
-        <div className="p-10 border-b border-white/5 flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
+      <aside className={`
+        fixed inset-0 z-50 lg:relative lg:flex lg:w-72 bg-zinc-950 text-white flex-col lg:sticky lg:top-0 lg:h-screen shadow-2xl transition-transform duration-500 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="hidden lg:flex p-10 border-b border-white/5 items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center font-black rotate-12 shadow-lg shadow-orange-600/30">C</div>
           <div>
             <h2 className="text-xl font-black tracking-tighter uppercase italic leading-none">Capital</h2>
@@ -162,7 +184,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
         
-        <nav className="p-6 flex-grow overflow-y-auto space-y-2 custom-scrollbar">
+        <nav className="p-6 pt-24 lg:pt-6 flex-grow overflow-y-auto space-y-2 custom-scrollbar">
           {[
             {id:'stats',l:'الإحصائيات',i:<LayoutDashboard className="w-5 h-5" />}, 
             {id:'products',l:'المنتجات',i:<Package className="w-5 h-5" />}, 
@@ -174,7 +196,7 @@ const AdminDashboard: React.FC = () => {
           ].map(t => (
             <button 
               key={t.id} 
-              onClick={() => setActiveTab(t.id as any)} 
+              onClick={() => handleTabChange(t.id as any)} 
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all duration-300 ${activeTab === t.id ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'text-zinc-500 hover:bg-white/5 hover:text-white'}`}
             >
               {t.i}<span className="text-sm">{t.l}</span>
@@ -190,8 +212,16 @@ const AdminDashboard: React.FC = () => {
         </div>
       </aside>
 
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Panel Content */}
-      <main className="flex-grow p-6 lg:p-14 overflow-y-auto max-h-screen custom-scrollbar">
+      <main className="flex-grow p-6 lg:p-14 overflow-y-auto lg:max-h-screen custom-scrollbar w-full">
         <header className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6">
            <div>
               <h1 className="text-5xl font-black italic text-zinc-900 uppercase tracking-tighter leading-none mb-2">{activeTab}</h1>
