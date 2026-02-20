@@ -17,11 +17,16 @@ export const apiService = {
     return database.get<Product[]>(DB_KEYS.PRODUCTS);
   },
   async saveProduct(product: Product) {
-    database.saveProduct(product);
+    const items = database.get<Product[]>(DB_KEYS.PRODUCTS);
+    const index = items.findIndex(p => p.id === product.id);
+    if (index > -1) items[index] = product;
+    else items.push(product);
+    database.save(DB_KEYS.PRODUCTS, items);
     return { success: true };
   },
   async deleteProduct(id: string) {
-    database.deleteProduct(id);
+    const items = database.get<Product[]>(DB_KEYS.PRODUCTS).filter(p => p.id !== id);
+    database.save(DB_KEYS.PRODUCTS, items);
     return { success: true };
   },
 
@@ -30,11 +35,16 @@ export const apiService = {
     return database.get<Article[]>(DB_KEYS.ARTICLES);
   },
   async saveArticle(article: Article) {
-    database.saveArticle(article);
+    const items = database.get<Article[]>(DB_KEYS.ARTICLES);
+    const index = items.findIndex(a => a.id === article.id);
+    if (index > -1) items[index] = article;
+    else items.push(article);
+    database.save(DB_KEYS.ARTICLES, items);
     return { success: true };
   },
   async deleteArticle(id: string) {
-    database.deleteArticle(id);
+    const items = database.get<Article[]>(DB_KEYS.ARTICLES).filter(a => a.id !== id);
+    database.save(DB_KEYS.ARTICLES, items);
     return { success: true };
   },
 
@@ -44,7 +54,9 @@ export const apiService = {
   },
   async saveGalleryItem(item: GalleryItem) {
     const items = database.get<GalleryItem[]>(DB_KEYS.GALLERY);
-    items.push(item);
+    const index = items.findIndex(i => i.id === item.id);
+    if (index > -1) items[index] = item;
+    else items.push(item);
     database.save(DB_KEYS.GALLERY, items);
     return { success: true };
   },
@@ -60,7 +72,9 @@ export const apiService = {
   },
   async saveReview(review: Review) {
     const items = database.get<Review[]>(DB_KEYS.REVIEWS);
-    items.push(review);
+    const index = items.findIndex(r => r.id === review.id);
+    if (index > -1) items[index] = review;
+    else items.push(review);
     database.save(DB_KEYS.REVIEWS, items);
     return { success: true };
   },
@@ -88,7 +102,8 @@ export const apiService = {
 
   // Settings
   async getSettings(): Promise<SiteConfig> {
-    return database.get<SiteConfig>(DB_KEYS.SETTINGS);
+    const cfg = database.get<SiteConfig>(DB_KEYS.SETTINGS);
+    return cfg || {} as SiteConfig;
   },
   async saveSettings(config: SiteConfig) {
     database.save(DB_KEYS.SETTINGS, config);
