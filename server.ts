@@ -1,18 +1,13 @@
 
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
 import path from 'path';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
 import { createServer as createViteServer } from 'vite';
 
 const app = express();
 const PORT = 3000;
-const DATA_DIR = path.join(process.cwd(), 'data');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
-}
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -24,122 +19,263 @@ app.use((req, res, next) => {
   next();
 });
 
-const INITIAL_DATA: Record<string, any> = {
-  products: [
-    {
-      id: '1',
-      name: { ar: 'فحم طلح سوداني نخب أول', en: 'Premium Sudanese Talh Charcoal' },
-      description: { 
-        ar: 'فحم طبيعي 100% مستخرج من غابات السودان. يتميز بصوت رنين معدني وقوة حرارة جبارة تدوم لأكثر من 5 ساعات متواصلة. خالي من الأتربة والشوائب تماماً.', 
-        en: '100% natural charcoal from Sudan forests. Characterized by a metallic ring and immense heat power lasting over 5 hours.' 
-      },
-      images: [
-        'https://images.unsplash.com/photo-1599619351208-3e6c839d6828?q=80&w=2072&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1541810270-3601557ba8d6?q=80&w=2070&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1521618755572-156ae0cdd74d?q=80&w=2076&auto=format&fit=crop'
-      ],
-      category: 'Premium'
-    },
-    {
-      id: '2',
-      name: { ar: 'فحم حمضيات (برتقال وليمون)', en: 'Citrus Charcoal (Orange & Lemon)' },
-      description: { 
-        ar: 'فحم مثالي للمشويات والأرجيلة، يتميز برماد أبيض ناصع جداً واشتعال سريع بدون شرر أو أدخنة كثيفة.', 
-        en: 'Ideal for grilling and shisha, featuring very white ash and fast ignition without sparks.' 
-      },
-      images: [
-        'https://images.unsplash.com/photo-1521618755572-156ae0cdd74d?q=80&w=2076&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1591261730799-ee4e6c2d16d7?q=80&w=2070&auto=format&fit=crop'
-      ],
-      category: 'Citrus'
-    }
-  ],
-  articles: [
-    {
-      id: '1',
-      title: { ar: 'أسرار صناعة الفحم في دمياط', en: 'Secrets of Charcoal Industry in Damietta' },
-      content: { 
-        ar: 'تعتبر المنطقة الصناعية بدمياط الجديدة قلعة لصناعة الفحم في مصر. نعتمد على أفران حديثة صديقة للبيئة تضمن جودة الكربون ونقائه من الشوائب.', 
-        en: 'The industrial zone in New Damietta is a stronghold for the charcoal industry. We use modern eco-friendly kilns that ensure carbon quality and purity.' 
-      },
-      image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1974&auto=format&fit=crop',
-      date: '2024-07-10'
-    }
-  ],
-  reviews: [
-    {
-      id: '1',
-      author: 'أحمد بدير',
-      rating: 5,
-      comment: { ar: 'فحم ممتاز وسعره مناسب جداً، تعامل راقي وسرعة في التوصيل.', en: 'Excellent charcoal, great price, and professional service.' },
-      avatar: 'https://i.pravatar.cc/150?u=a'
-    }
-  ],
-  settings: {
-    phone: '01000187892',
-    whatsapp: '201000187892',
-    logo: 'https://images.unsplash.com/photo-1599619351208-3e6c839d6828?q=80&w=100&auto=format&fit=crop',
-    address: {
-      ar: 'دمياط الجديدة، المنطقة الصناعية - مصنع فحم العاصمة',
-      en: 'New Damietta, Industrial Area - Capital Charcoal Factory'
-    },
-    heroTitle: {
-      ar: 'فحم العاصمة - التميز في كل شروة',
-      en: 'Capital Charcoal - Excellence in Every Batch'
-    },
-    heroSub: {
-      ar: 'المصدر الأول في مصر لأجود أنواع الفحم النباتي والمضغوط. نضمن لك حرارة تدوم طويلاً ونقاءً لا يضاهى.',
-      en: 'The primary source in Egypt for the finest natural and compressed charcoal. We guarantee long-lasting heat and unmatched purity.'
-    },
-    heroImage: 'https://images.unsplash.com/photo-1541810270-3601557ba8d6?q=80&w=2070&auto=format&fit=crop'
-  },
-  gallery: [],
-  inquiries: []
-};
+let db: any;
 
-// Helper to read/write data
-const getData = (key: string) => {
-  const filePath = path.join(DATA_DIR, `${key}.json`);
-  if (!fs.existsSync(filePath)) {
-    const defaultValue = INITIAL_DATA[key] || [];
-    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2));
-    return defaultValue;
+// Initialize SQLite Database
+async function initDB() {
+  try {
+    db = await open({
+      filename: path.join(process.cwd(), 'database.sqlite'),
+      driver: sqlite3.Database
+    });
+
+    console.log('Connected to SQLite database');
+    
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id TEXT PRIMARY KEY,
+        name_ar TEXT, name_en TEXT,
+        description_ar TEXT, description_en TEXT,
+        images TEXT, category TEXT, price TEXT
+      );
+      
+      CREATE TABLE IF NOT EXISTS articles (
+        id TEXT PRIMARY KEY,
+        title_ar TEXT, title_en TEXT,
+        content_ar TEXT, content_en TEXT,
+        image TEXT, date TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS gallery (
+        id TEXT PRIMARY KEY,
+        url TEXT, title_ar TEXT, title_en TEXT, category TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS reviews (
+        id TEXT PRIMARY KEY,
+        author TEXT, rating INTEGER,
+        comment_ar TEXT, comment_en TEXT, avatar TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS inquiries (
+        id TEXT PRIMARY KEY,
+        name TEXT, email TEXT, msg TEXT, date TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        phone TEXT, whatsapp TEXT, logo TEXT,
+        address_ar TEXT, address_en TEXT,
+        heroTitle_ar TEXT, heroTitle_en TEXT,
+        heroSub_ar TEXT, heroSub_en TEXT, heroImage TEXT
+      );
+    `);
+
+    // Check if settings exist, if not insert default
+    const settings = await db.get('SELECT * FROM settings WHERE id = 1');
+    if (!settings) {
+      await db.run(`
+        INSERT INTO settings (id, phone, whatsapp, logo, address_ar, address_en, heroTitle_ar, heroTitle_en, heroSub_ar, heroSub_en, heroImage)
+        VALUES (1, '01000187892', '201000187892', '', 'Damietta', 'Damietta', 'Capital Charcoal', 'Capital Charcoal', 'Quality', 'Quality', '')
+      `);
+    }
+
+    console.log('Database tables initialized');
+  } catch (err) {
+    console.error('Database initialization error:', err);
   }
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-};
-
-const saveData = (key: string, data: any) => {
-  const filePath = path.join(DATA_DIR, `${key}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-};
+}
 
 // API Routes
-app.get('/api/:key', (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const { key } = req.params;
-    console.log(`Getting data for ${key}`);
-    res.json(getData(key));
+    const rows = await db.all('SELECT * FROM products');
+    const products = rows.map((r: any) => ({
+      id: r.id,
+      name: { ar: r.name_ar, en: r.name_en },
+      description: { ar: r.description_ar, en: r.description_en },
+      images: JSON.parse(r.images || '[]'),
+      category: r.category,
+      price: r.price
+    }));
+    res.json(products);
   } catch (err: any) {
-    console.error(`Error getting ${req.params.key}:`, err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/:key', (req, res) => {
+app.post('/api/products', async (req, res) => {
   try {
-    const { key } = req.params;
-    const data = req.body;
-    console.log(`Saving data for ${key}`, Array.isArray(data) ? `(Array of ${data.length})` : '(Object)');
-    saveData(key, data);
+    const products = req.body;
+    await db.run('DELETE FROM products');
+    for (const p of products) {
+      await db.run(
+        'INSERT INTO products (id, name_ar, name_en, description_ar, description_en, images, category, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [p.id, p.name.ar, p.name.en, p.description.ar, p.description.en, JSON.stringify(p.images), p.category, p.price]
+      );
+    }
     res.json({ success: true });
   } catch (err: any) {
-    console.error(`Error saving ${req.params.key}:`, err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/articles', async (req, res) => {
+  try {
+    const rows = await db.all('SELECT * FROM articles');
+    const articles = rows.map((r: any) => ({
+      id: r.id,
+      title: { ar: r.title_ar, en: r.title_en },
+      content: { ar: r.content_ar, en: r.content_en },
+      image: r.image,
+      date: r.date
+    }));
+    res.json(articles);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/articles', async (req, res) => {
+  try {
+    const articles = req.body;
+    await db.run('DELETE FROM articles');
+    for (const a of articles) {
+      await db.run(
+        'INSERT INTO articles (id, title_ar, title_en, content_ar, content_en, image, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [a.id, a.title.ar, a.title.en, a.content.ar, a.content.en, a.image, a.date]
+      );
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/gallery', async (req, res) => {
+  try {
+    const rows = await db.all('SELECT * FROM gallery');
+    const gallery = rows.map((r: any) => ({
+      id: r.id,
+      url: r.url,
+      title: { ar: r.title_ar, en: r.title_en },
+      category: r.category
+    }));
+    res.json(gallery);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/gallery', async (req, res) => {
+  try {
+    const items = req.body;
+    await db.run('DELETE FROM gallery');
+    for (const i of items) {
+      await db.run(
+        'INSERT INTO gallery (id, url, title_ar, title_en, category) VALUES (?, ?, ?, ?, ?)',
+        [i.id, i.url, i.title.ar, i.title.en, i.category]
+      );
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const rows = await db.all('SELECT * FROM reviews');
+    const reviews = rows.map((r: any) => ({
+      id: r.id,
+      author: r.author,
+      rating: r.rating,
+      comment: { ar: r.comment_ar, en: r.comment_en },
+      avatar: r.avatar
+    }));
+    res.json(reviews);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const reviews = req.body;
+    await db.run('DELETE FROM reviews');
+    for (const r of reviews) {
+      await db.run(
+        'INSERT INTO reviews (id, author, rating, comment_ar, comment_en, avatar) VALUES (?, ?, ?, ?, ?, ?)',
+        [r.id, r.author, r.rating, r.comment.ar, r.comment.en, r.avatar]
+      );
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/inquiries', async (req, res) => {
+  try {
+    const rows = await db.all('SELECT * FROM inquiries ORDER BY date DESC');
+    res.json(rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/inquiries', async (req, res) => {
+  try {
+    const inquiries = req.body;
+    await db.run('DELETE FROM inquiries');
+    for (const i of inquiries) {
+      await db.run(
+        'INSERT INTO inquiries (id, name, email, msg, date) VALUES (?, ?, ?, ?, ?)',
+        [i.id, i.name, i.email, i.msg, i.date]
+      );
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const r = await db.get('SELECT * FROM settings WHERE id = 1');
+    if (!r) return res.json({});
+    res.json({
+      phone: r.phone,
+      whatsapp: r.whatsapp,
+      logo: r.logo,
+      address: { ar: r.address_ar, en: r.address_en },
+      heroTitle: { ar: r.heroTitle_ar, en: r.heroTitle_en },
+      heroSub: { ar: r.heroSub_ar, en: r.heroSub_en },
+      heroImage: r.heroImage
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  try {
+    const s = req.body;
+    await db.run('DELETE FROM settings');
+    await db.run(
+      'INSERT INTO settings (id, phone, whatsapp, logo, address_ar, address_en, heroTitle_ar, heroTitle_en, heroSub_ar, heroSub_en, heroImage) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [s.phone, s.whatsapp, s.logo, s.address.ar, s.address.en, s.heroTitle.ar, s.heroTitle.en, s.heroSub.ar, s.heroSub.en, s.heroImage]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // Vite middleware for development
 async function setupVite() {
+  await initDB();
+  
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
