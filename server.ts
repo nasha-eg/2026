@@ -15,7 +15,14 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 const INITIAL_DATA: Record<string, any> = {
   products: [
@@ -108,15 +115,27 @@ const saveData = (key: string, data: any) => {
 
 // API Routes
 app.get('/api/:key', (req, res) => {
-  const { key } = req.params;
-  res.json(getData(key));
+  try {
+    const { key } = req.params;
+    console.log(`Getting data for ${key}`);
+    res.json(getData(key));
+  } catch (err: any) {
+    console.error(`Error getting ${req.params.key}:`, err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/:key', (req, res) => {
-  const { key } = req.params;
-  const data = req.body;
-  saveData(key, data);
-  res.json({ success: true });
+  try {
+    const { key } = req.params;
+    const data = req.body;
+    console.log(`Saving data for ${key}`, Array.isArray(data) ? `(Array of ${data.length})` : '(Object)');
+    saveData(key, data);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error(`Error saving ${req.params.key}:`, err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Vite middleware for development
