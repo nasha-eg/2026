@@ -87,6 +87,15 @@ async function initDB() {
 }
 
 // API Routes
+app.post('/api/install', async (req, res) => {
+  try {
+    await initDB();
+    res.json({ success: true, message: 'Database initialized successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/products', async (req, res) => {
   try {
     const rows = await db.all('SELECT * FROM products');

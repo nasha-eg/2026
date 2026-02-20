@@ -11,6 +11,7 @@ import GalleryPage from './pages/GalleryPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import ContactPage from './pages/ContactPage';
+import InstallPage from './pages/InstallPage';
 
 interface AppContextType {
   lang: Language;
@@ -100,6 +101,7 @@ const App: React.FC = () => {
               <Route path="/gallery" element={<GalleryPage />} />
               <Route path="/articles" element={<ArticlesPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/install" element={<InstallPage />} />
               <Route path="/admin" element={isLoggedIn ? <AdminDashboard /> : <Login />} />
               <Route path="/login" element={<Login />} />
             </Routes>
@@ -131,7 +133,7 @@ const Navbar: React.FC = () => {
   const { lang, setLang, siteConfig } = context;
   const t = TRANSLATIONS[lang];
 
-  if (['/admin', '/login'].includes(pathname)) return null;
+  if (['/admin', '/login', '/install'].includes(pathname)) return null;
 
   const links = [
     { p: '/', l: t.home },
@@ -174,7 +176,7 @@ const Navbar: React.FC = () => {
 const Footer: React.FC = () => {
   const context = useContext(AppContext);
   const { pathname } = useLocation();
-  if (!context || ['/admin', '/login'].includes(pathname)) return null;
+  if (!context || ['/admin', '/login', '/install'].includes(pathname)) return null;
   const { lang, siteConfig } = context;
   return (
     <footer className="bg-zinc-950 text-white pt-20 pb-10">
