@@ -1,112 +1,153 @@
 
 import { Product, Article, Review, SiteConfig, GalleryItem } from '../types';
-import { database } from './database';
 
-const DB_KEYS = {
-  PRODUCTS: 'capital_charcoal_products',
-  ARTICLES: 'capital_charcoal_articles',
-  GALLERY: 'capital_charcoal_gallery',
-  REVIEWS: 'capital_charcoal_reviews',
-  INQUIRIES: 'capital_charcoal_inquiries',
-  SETTINGS: 'capital_charcoal_settings'
-};
+const API_BASE = '/api';
 
 export const apiService = {
   // Products
   async getProducts(): Promise<Product[]> {
-    return database.get<Product[]>(DB_KEYS.PRODUCTS);
+    const res = await fetch(`${API_BASE}/products`);
+    return res.json();
   },
   async saveProduct(product: Product) {
-    const items = database.get<Product[]>(DB_KEYS.PRODUCTS);
+    const items = await this.getProducts();
     const index = items.findIndex(p => p.id === product.id);
     if (index > -1) items[index] = product;
     else items.push(product);
-    database.save(DB_KEYS.PRODUCTS, items);
+    await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
   async deleteProduct(id: string) {
-    const items = database.get<Product[]>(DB_KEYS.PRODUCTS).filter(p => p.id !== id);
-    database.save(DB_KEYS.PRODUCTS, items);
+    const items = (await this.getProducts()).filter(p => p.id !== id);
+    await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
 
   // Articles
   async getArticles(): Promise<Article[]> {
-    return database.get<Article[]>(DB_KEYS.ARTICLES);
+    const res = await fetch(`${API_BASE}/articles`);
+    return res.json();
   },
   async saveArticle(article: Article) {
-    const items = database.get<Article[]>(DB_KEYS.ARTICLES);
+    const items = await this.getArticles();
     const index = items.findIndex(a => a.id === article.id);
     if (index > -1) items[index] = article;
     else items.push(article);
-    database.save(DB_KEYS.ARTICLES, items);
+    await fetch(`${API_BASE}/articles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
   async deleteArticle(id: string) {
-    const items = database.get<Article[]>(DB_KEYS.ARTICLES).filter(a => a.id !== id);
-    database.save(DB_KEYS.ARTICLES, items);
+    const items = (await this.getArticles()).filter(a => a.id !== id);
+    await fetch(`${API_BASE}/articles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
 
   // Gallery
   async getGallery(): Promise<GalleryItem[]> {
-    return database.get<GalleryItem[]>(DB_KEYS.GALLERY);
+    const res = await fetch(`${API_BASE}/gallery`);
+    return res.json();
   },
   async saveGalleryItem(item: GalleryItem) {
-    const items = database.get<GalleryItem[]>(DB_KEYS.GALLERY);
+    const items = await this.getGallery();
     const index = items.findIndex(i => i.id === item.id);
     if (index > -1) items[index] = item;
     else items.push(item);
-    database.save(DB_KEYS.GALLERY, items);
+    await fetch(`${API_BASE}/gallery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
   async deleteGalleryItem(id: string) {
-    const items = database.get<GalleryItem[]>(DB_KEYS.GALLERY).filter(i => i.id !== id);
-    database.save(DB_KEYS.GALLERY, items);
+    const items = (await this.getGallery()).filter(i => i.id !== id);
+    await fetch(`${API_BASE}/gallery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
 
   // Reviews
   async getReviews(): Promise<Review[]> {
-    return database.get<Review[]>(DB_KEYS.REVIEWS);
+    const res = await fetch(`${API_BASE}/reviews`);
+    return res.json();
   },
   async saveReview(review: Review) {
-    const items = database.get<Review[]>(DB_KEYS.REVIEWS);
+    const items = await this.getReviews();
     const index = items.findIndex(r => r.id === review.id);
     if (index > -1) items[index] = review;
     else items.push(review);
-    database.save(DB_KEYS.REVIEWS, items);
+    await fetch(`${API_BASE}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
   async deleteReview(id: string) {
-    const items = database.get<Review[]>(DB_KEYS.REVIEWS).filter(r => r.id !== id);
-    database.save(DB_KEYS.REVIEWS, items);
+    const items = (await this.getReviews()).filter(r => r.id !== id);
+    await fetch(`${API_BASE}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
 
   // Inquiries
   async getInquiries() {
-    return database.get<any[]>(DB_KEYS.INQUIRIES);
+    const res = await fetch(`${API_BASE}/inquiries`);
+    return res.json();
   },
   async deleteInquiry(id: string) {
-    const items = database.get<any[]>(DB_KEYS.INQUIRIES).filter(i => i.id !== id);
-    database.save(DB_KEYS.INQUIRIES, items);
+    const items = (await this.getInquiries()).filter((i: any) => i.id !== id);
+    await fetch(`${API_BASE}/inquiries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
   async sendInquiry(inquiry: any) {
-    const items = database.get<any[]>(DB_KEYS.INQUIRIES);
+    const items = await this.getInquiries();
     items.unshift(inquiry);
-    database.save(DB_KEYS.INQUIRIES, items);
+    await fetch(`${API_BASE}/inquiries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(items)
+    });
     return { success: true };
   },
 
   // Settings
   async getSettings(): Promise<SiteConfig> {
-    const cfg = database.get<SiteConfig>(DB_KEYS.SETTINGS);
-    return cfg || {} as SiteConfig;
+    const res = await fetch(`${API_BASE}/settings`);
+    return res.json();
   },
   async saveSettings(config: SiteConfig) {
-    database.save(DB_KEYS.SETTINGS, config);
+    await fetch(`${API_BASE}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    });
     return { success: true };
   }
 };

@@ -2,34 +2,46 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../App';
 import { TRANSLATIONS } from '../constants';
+import { apiService } from '../services/apiService';
 
 const ContactPage: React.FC = () => {
   const context = useContext(AppContext);
   const [formState, setFormState] = useState({ name: '', email: '', msg: '' });
   const [sent, setSent] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   if (!context) return null;
   const { lang, siteConfig, setInquiries } = context;
   const t = TRANSLATIONS[lang];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSending(true);
     
-    // Create new inquiry object
-    const newInq = {
-       id: Date.now().toString(),
-       name: formState.name,
-       email: formState.email,
-       msg: formState.msg,
-       date: new Date().toLocaleDateString('ar-EG')
-    };
-    
-    // Add to global state (Admin will see it)
-    setInquiries(prev => [newInq, ...prev]);
-    
-    setSent(true);
-    setFormState({ name: '', email: '', msg: '' });
-    setTimeout(() => setSent(false), 5000);
+    try {
+      // Create new inquiry object
+      const newInq = {
+         id: Date.now().toString(),
+         name: formState.name,
+         email: formState.email,
+         msg: formState.msg,
+         date: new Date().toLocaleDateString('ar-EG')
+      };
+      
+      // Save to server
+      await apiService.sendInquiry(newInq);
+      
+      // Update global state
+      setInquiries(prev => [newInq, ...prev]);
+      
+      setSent(true);
+      setFormState({ name: '', email: '', msg: '' });
+      setTimeout(() => setSent(false), 5000);
+    } catch (err) {
+      console.error("Failed to send inquiry", err);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -130,7 +142,7 @@ const ContactPage: React.FC = () => {
                  )}
 
                  <button type="submit" className="w-full bg-zinc-950 hover:bg-orange-600 text-white font-black py-8 rounded-[2.5rem] text-xl shadow-2xl transition-all active:scale-95 group uppercase italic tracking-tighter">
-                    إرسال البيانات الآن
+                     {isSending ? 'جاري الإرسال...' : 'إرسال البيانات الآن'}
                     <span className="inline-block ml-4 group-hover:translate-x-2 transition-transform">&rarr;</span>
                  </button>
               </form>
